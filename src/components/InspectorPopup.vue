@@ -4,6 +4,41 @@
       <div class="title">🔍 Element Inspector v1.0</div>
     </div>
 
+    <!-- URL管理区域 -->
+    <div class="url-section">
+      <div class="current-tab-info" v-if="currentTab.url">
+        <div class="tab-title">{{ currentTab.title }}</div>
+        <div class="tab-url">{{ currentTab.url }}</div>
+        <button @click="saveCurrentUrl" class="save-url-btn">
+          保存当前URL
+        </button>
+      </div>
+
+      <!-- URL列表 -->
+      <div class="config-section" v-if="config.urls.length > 0">
+        <div class="config-title">🔗 已保存的URLs</div>
+        <div class="url-list">
+          <div
+            v-for="urlItem in config.urls"
+            :key="urlItem.id"
+            class="url-item"
+          >
+            <div class="url-info" @click="openUrl(urlItem.url)">
+              <div class="url-title">{{ urlItem.title }}</div>
+              <div class="url-address">{{ urlItem.url }}</div>
+              <div class="url-time">保存于: {{ urlItem.savedAt }}</div>
+            </div>
+            <button
+              @click="deleteUrl(urlItem.id)"
+              class="delete-url-btn"
+            >
+              删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="config-section">
       <div class="config-title">⚙️ 配置设置</div>
       <div class="form-group">
@@ -88,15 +123,15 @@
         </div>
       </div>
 
-      <div v-if ="!showCustomForm" bclass="form-group">
-        <label class="form-label" for="promptText">提示内容：</label>
+      <div v-if="!showCustomForm" class="form-group">
+        <label class="form-label" for="promptText">Prompt内容：</label>
         <textarea
           id="promptText"
           v-model="currentPrompt"
           @input="onPromptChange"
           class="form-textarea"
           rows="6"
-          placeholder="输入AI分析提示..."
+          placeholder="请输入提示词，${html} 会被替换成选中的元素"
         ></textarea>
       </div>
     </div>
@@ -158,6 +193,7 @@ export default {
       editingItemId,
       editingItemName,
       editInput,
+      currentTab,
       onItemChange,
       onPromptChange,
       showAddForm,
@@ -167,7 +203,23 @@ export default {
       startEditItem,
       saveEditItem,
       cancelEditItem,
+      saveCurrentUrl,
+      deleteUrl,
+      openUrl,
+      getCurrentTabInfo
     } = useInspectorConfig()
+
+    const startInspection = () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'startInspection',
+            prompt: currentPrompt.value
+          })
+          window.close()
+        }
+      })
+    }
 
     return {
       config,
@@ -179,6 +231,7 @@ export default {
       editingItemId,
       editingItemName,
       editInput,
+      currentTab,
       onItemChange,
       onPromptChange,
       showAddForm,
@@ -188,7 +241,10 @@ export default {
       startEditItem,
       saveEditItem,
       cancelEditItem,
-
+      saveCurrentUrl,
+      deleteUrl,
+      openUrl,
+      startInspection
     }
   }
 }
@@ -200,7 +256,8 @@ export default {
   color: white;
   padding: 16px;
   text-align: center;
-  border-radius: 8px 8px 8px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .title {
@@ -210,8 +267,10 @@ export default {
 }
 
 .config-section {
-  padding: 20px;
   background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
 .config-title {
@@ -254,9 +313,41 @@ export default {
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
+.form-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  resize: vertical;
+  min-height: 120px;
+  box-sizing: border-box;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
 .edit-btn {
   margin-left: 4px;
-  padding: 6px 8px;
+  padding: 8px 12px;
   background: #6c757d;
   color: white;
   border: none;
@@ -297,37 +388,6 @@ export default {
 
 .delete-btn:hover {
   background: #c82333;
-}
-
-.form-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  resize: vertical;
-  min-height: 120px;
-}
-
-.form-textarea:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .save-btn {
@@ -408,18 +468,7 @@ export default {
   justify-content: flex-end;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
+/* 使用帮助样式 */
 .instructions {
   background: #f8f9fa;
   border-radius: 8px;
@@ -481,93 +530,105 @@ export default {
   color: #666;
 }
 
-.config-section {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+/* URL管理样式 */
+.url-section {
+  padding-bottom: 8px;
 }
 
-.config-title {
-  font-size: 16px;
+.current-tab-info {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.tab-title {
   font-weight: 600;
   color: #333;
-  margin-bottom: 12px;
-}
-
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-label {
-  display: block;
   margin-bottom: 4px;
-  font-weight: 500;
-  color: #555;
+  font-size: 13px;
 }
 
-.form-select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
+.tab-url {
+  color: #666;
+  font-size: 11px;
+  word-break: break-all;
+  margin-bottom: 8px;
 }
 
-.form-textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.form-select:focus,
-.form-textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.form-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
-}
-
-.add-btn,
-.delete-btn,
-.save-btn,
-.cancel-btn {
+.save-url-btn {
   background: #007bff;
   color: white;
   border: none;
+  padding: 6px 12px;
   border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
   cursor: pointer;
+  font-size: 12px;
 }
 
-.add-btn:hover,
-.delete-btn:hover,
-.save-btn:hover,
-.cancel-btn:hover {
+.save-url-btn:hover {
   background: #0056b3;
 }
 
-.delete-btn {
-  background: #dc3545;
+.url-list {
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.delete-btn:hover {
+.url-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: #fafafa;
+}
+
+.url-info {
+  flex: 1;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.url-info:hover {
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 4px;
+  margin: -4px;
+}
+
+.url-title {
+  font-weight: 500;
+  font-size: 12px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.url-address {
+  font-size: 10px;
+  color: #666;
+  word-break: break-all;
+  margin-bottom: 2px;
+}
+
+.url-time {
+  font-size: 9px;
+  color: #888;
+}
+
+.delete-url-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.delete-url-btn:hover {
   background: #c82333;
 }
 </style>

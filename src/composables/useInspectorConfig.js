@@ -10,7 +10,8 @@ export function useInspectorConfig() {
         name: '默认项目',
         prompt: '${html}请分析这个元素的CSS样式和布局特点。'
       }
-    ]
+    ],
+    urls: [] // 新增URLs存储
   })
 
   const currentItemId = ref('default')
@@ -22,6 +23,12 @@ export function useInspectorConfig() {
   const editingItemId = ref(null)
   const editingItemName = ref('')
   const editInput = ref(null)
+
+  // 新增当前标签页信息状态
+  const currentTab = ref({
+    title: '',
+    url: ''
+  })
 
   // 计算属性
   const currentItem = computed(() => {
@@ -47,6 +54,10 @@ export function useInspectorConfig() {
       if (result.inspectorConfig && result.inspectorConfig.items && Array.isArray(result.inspectorConfig.items)) {
         console.log("找到有效配置")
         config.value = result.inspectorConfig
+        // 确保urls数组存在
+        if (!config.value.urls) {
+          config.value.urls = []
+        }
         // 确保当前选择的项目存在
         if (!config.value.items.find(item => item.id === currentItemId.value)) {
           currentItemId.value = config.value.items[0]?.id || 'default'
@@ -61,7 +72,8 @@ export function useInspectorConfig() {
               name: '默认项目',
               prompt: '请分析这个元素的CSS样式和布局特点。'
             }
-          ]
+          ],
+          urls: []
         }
         currentItemId.value = 'default'
         // 保存默认配置
@@ -176,9 +188,66 @@ export function useInspectorConfig() {
     editingItemName.value = ''
   }
 
+  // 新增URL管理方法
+  const getCurrentTabInfo = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        currentTab.value = {
+          title: tabs[0].title,
+          url: tabs[0].url
+        }
+        console.log(
+          `当前标签页信息:\n标题: ${tabs[0].title}\nURL: ${tabs[0].url}`
+        );
+      }
+    });
+  }
+
+  const saveCurrentUrl = () => {
+    if (!currentTab.value.url) {
+      getCurrentTabInfo()
+      setTimeout(() => {
+        if (currentTab.value.url && !config.value.urls.some(item => item.url === new URL(currentTab.value.url).host)) {
+          const urlItem = {
+            id: Date.now().toString(),
+            title: currentTab.value.title,
+            url: new URL(currentTab.value.url).host,
+            savedAt: new Date().toLocaleString()
+          }
+          config.value.urls.push(urlItem)
+          saveConfig()
+        }
+      }, 100)
+    } else {
+      // 检查URL是否已存在
+      if (!config.value.urls.some(item => item.url === new URL(currentTab.value.url).host)) {
+        const urlItem = {
+          id: Date.now().toString(),
+          title: currentTab.value.title,
+          url: new URL(currentTab.value.url).host,
+          savedAt: new Date().toLocaleString()
+        }
+        config.value.urls.push(urlItem)
+        saveConfig()
+      }
+    }
+  }
+
+  const deleteUrl = (urlId) => {
+    const index = config.value.urls.findIndex(item => item.id === urlId)
+    if (index !== -1) {
+      config.value.urls.splice(index, 1)
+      saveConfig()
+    }
+  }
+
+  const openUrl = (url) => {
+    chrome.tabs.create({ url: url })
+  }
 
   // 初始化
   loadConfig()
+  getCurrentTabInfo()
 
   return {
     config,
@@ -190,6 +259,7 @@ export function useInspectorConfig() {
     editingItemId,
     editingItemName,
     editInput,
+    currentTab,
     onItemChange,
     onPromptChange,
     showAddForm,
@@ -199,5 +269,9 @@ export function useInspectorConfig() {
     startEditItem,
     saveEditItem,
     cancelEditItem,
+    saveCurrentUrl,
+    deleteUrl,
+    openUrl,
+    getCurrentTabInfo
   }
 }

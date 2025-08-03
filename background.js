@@ -43,6 +43,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
     // 通知所有content scripts配置已更新
     chrome.tabs.query({}, (tabs) => {
+      console.log("tabs:", tabs);
       tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, {
           action: 'configUpdated',

@@ -82,16 +82,22 @@ class ElementInspector {
     bindEvents() {
         // 监听键盘事件
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Control' && e.location === 1) { // Left Ctrl
-                this.isCtrlPressed = true;
-                this.startInspecting();
+            if (this.config && this.config.urls
+                && this.config.urls.some(item => item.url === new URL(window.location.href).host)) {
+                if (e.key === 'Control' && e.location === 1) { // Left Ctrl
+                    this.isCtrlPressed = true;
+                    this.startInspecting();
+                }
             }
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'Control') {
-                this.isCtrlPressed = false;
-                this.stopInspecting();
+            if (this.config && this.config.urls
+                && this.config.urls.some(item => item.url === new URL(window.location.href).host)) {
+                if (e.key === 'Control' && e.location === 1) {
+                    this.isCtrlPressed = false;
+                    this.stopInspecting();
+                }
             }
         });
 
@@ -386,6 +392,9 @@ class ElementInspector {
         //把 html element 转换成html代码字符串
         let htmlString = " " + this.lastHighlightedElement.outerHTML
         let result = prompt.replace('${html}', htmlString);
+        if (result === undefined || result === null || result.trim() === '') {
+            result = htmlString;
+        }
         console.log('📋 复制到剪贴板:', result);
         navigator.clipboard.writeText(result)
             .then(() => {
