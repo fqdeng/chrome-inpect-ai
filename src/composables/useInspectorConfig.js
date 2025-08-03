@@ -69,17 +69,6 @@ export function useInspectorConfig() {
       }
     } catch (error) {
       console.error('加载配置失败:', error)
-      // 出错时使用默认配置
-      config.value = {
-        items: [
-          {
-            id: 'default',
-            name: '默认项目',
-            prompt: '请分析这个元素的CSS样式和布局特点。'
-          }
-        ]
-      }
-      currentItemId.value = 'default'
     }
   }
 
@@ -117,7 +106,7 @@ export function useInspectorConfig() {
     const newItem = {
       id: newId,
       name: newItemName.value.trim(),
-      prompt: '请分析这个元素的CSS样式和布局特点。'
+      prompt: '${html}请分析这个元素的CSS样式和布局特点。 '
     }
 
     config.value.items.push(newItem)
@@ -187,13 +176,6 @@ export function useInspectorConfig() {
     editingItemName.value = ''
   }
 
-  const handleEditKeydown = (event) => {
-    if (event.key === 'Enter') {
-      saveEditItem()
-    } else if (event.key === 'Escape') {
-      cancelEditItem()
-    }
-  }
 
   // 初始化
   loadConfig()
@@ -217,6 +199,5 @@ export function useInspectorConfig() {
     startEditItem,
     saveEditItem,
     cancelEditItem,
-    handleEditKeydown
   }
 }

@@ -59,7 +59,6 @@
           <input
             ref="editInput"
             v-model="editingItemName"
-            @keydown="handleEditKeydown"
             class="edit-input"
             type="text"
             placeholder="输入项目名称"
@@ -89,7 +88,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div v-if ="!showCustomForm" bclass="form-group">
         <label class="form-label" for="promptText">提示内容：</label>
         <textarea
           id="promptText"
@@ -168,7 +167,6 @@ export default {
       startEditItem,
       saveEditItem,
       cancelEditItem,
-      handleEditKeydown
     } = useInspectorConfig()
 
     return {
@@ -190,7 +188,7 @@ export default {
       startEditItem,
       saveEditItem,
       cancelEditItem,
-      handleEditKeydown
+
     }
   }
 }
