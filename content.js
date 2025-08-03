@@ -7,13 +7,62 @@ class ElementInspector {
     this.popupMenu = null;
     this.currentMousePosition = { x: 0, y: 0 }; // 存储当前鼠标位置
     this.isHoveringContextMenu = false; // 跟踪是否悬停在context menu上
+    this.config = null; // 存储配置
     this.init();
   }
 
-  init() {
+  async init() {
+    // 首先获取配置
+    await this.loadConfig();
     this.createOverlay();
     this.bindEvents();
+    this.setupConfigListener();
     console.log('Element Inspector 已激活 - 按住 Ctrl 键并悬停元素进行检查');
+  }
+
+  // 从background.js获取配置
+  async loadConfig() {
+    try {
+      const response = await this.sendMessageToBackground({ action: 'getInspectorConfig' });
+      if (response.success) {
+        this.config = response.config;
+        console.log('✅ 配置加载成功:', this.config);
+        this.applyConfig();
+      }
+    } catch (error) {
+      console.error('❌ 配置加载失败:', error);
+    }
+  }
+
+  // 发送消息到background script
+  sendMessageToBackground(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  // 监听配置更新
+  setupConfigListener() {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.action === 'configUpdated') {
+        console.log('🔄 收到配置更新:', message.config);
+        this.config = message.config;
+        this.applyConfig();
+        sendResponse({ success: true });
+      }
+    });
+  }
+
+  // 应用配置
+  applyConfig() {
+    if (!this.config) return;
+    console.log('🎨 配置已应用:', this.config);
   }
 
   createOverlay() {

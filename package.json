@@ -6,7 +6,7 @@
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "build:chrome": "vite build && cp manifest.json dist/ && cp -r icons dist/ && cp content.js dist/ && cp content.css dist/"
+    "build:chrome": "vite build && cp manifest.json dist/ && cp -r icons dist/ && cp content.js dist/ && cp content.css dist/ && cp background.js dist/"
   },
   "dependencies": {
     "vue": "^3.3.4"
