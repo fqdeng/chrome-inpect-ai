@@ -1,0 +1,18 @@
+{
+  "name": "chrome-inspect-ai",
+  "version": "1.0.0",
+  "description": "Chrome extension with Vue3 for element inspection",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "build:chrome": "vite build && cp manifest.json dist/ && cp -r icons dist/ && cp content.js dist/ && cp content.css dist/"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.3.4",
+    "vite": "^4.4.9"
+  }
+}
