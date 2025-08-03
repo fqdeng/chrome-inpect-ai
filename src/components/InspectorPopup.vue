@@ -9,21 +9,30 @@
       <div class="form-group">
         <label class="form-label" for="itemSelect">选择项目：</label>
         <div style="display: flex; gap: 8px;">
-          <select
-            id="itemSelect"
-            v-model="currentItemId"
-            @change="onItemChange"
-            class="form-select"
-            style="flex: 1;"
-          >
-            <option
-              v-for="item in config.items"
-              :key="item.id"
-              :value="item.id"
+          <div class="custom-select" style="flex: 1;">
+            <select
+              id="itemSelect"
+              v-model="currentItemId"
+              @change="onItemChange"
+              class="form-select"
             >
-              {{ item.name }}
-            </option>
-          </select>
+              <option
+                v-for="item in config.items"
+                :key="item.id"
+                :value="item.id"
+              >
+                {{ item.name }}
+              </option>
+            </select>
+            <button
+              @click="startEditItem(currentItemId)"
+              class="edit-btn"
+              type="button"
+              title="编辑当前项目名称"
+            >
+              ✏️
+            </button>
+          </div>
           <button
             @click="showAddForm"
             class="add-btn"
@@ -43,36 +52,58 @@
         </div>
       </div>
 
+      <!-- 编辑项目名称的弹窗 -->
+      <div v-if="editingItemId" class="edit-overlay" @click="cancelEditItem">
+        <div class="edit-modal" @click.stop>
+          <div class="edit-title">编辑项目名称</div>
+          <input
+            ref="editInput"
+            v-model="editingItemName"
+            @keydown="handleEditKeydown"
+            class="edit-input"
+            type="text"
+            placeholder="输入项目名称"
+          />
+          <div class="edit-buttons">
+            <button @click="saveEditItem" class="save-btn">保存</button>
+            <button @click="cancelEditItem" class="cancel-btn">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 添加新项目表单 -->
       <div v-if="showCustomForm" class="form-group">
-        <label class="form-label" for="customItemInput">新项目名称：</label>
+        <label class="form-label">新项目名称：</label>
         <div style="display: flex; gap: 8px;">
           <input
-            id="customItemInput"
+            ref="customInput"
             v-model="newItemName"
-            @keypress.enter="addNewItem"
+            @keyup.enter="addNewItem"
+            @keyup="(e) => e.key === 'Escape' && cancelAdd()"
             class="form-input"
             type="text"
-            placeholder="输入项目名称..."
-            ref="customInput"
-          >
-          <button @click="addNewItem" class="save-btn" type="button">保存</button>
-          <button @click="cancelAdd" class="cancel-btn" type="button">取消</button>
+            placeholder="输入项目名称"
+          />
+          <button @click="addNewItem" class="save-btn">保存</button>
+          <button @click="cancelAdd" class="cancel-btn">取消</button>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="promptTextarea">提示内容：</label>
+        <label class="form-label" for="promptText">提示内容：</label>
         <textarea
-          id="promptTextarea"
+          id="promptText"
           v-model="currentPrompt"
           @input="onPromptChange"
           class="form-textarea"
-          placeholder="请输入提示内容..."
+          rows="6"
+          placeholder="输入AI分析提示..."
         ></textarea>
       </div>
     </div>
 
     <div class="instructions">
+      <div class="config-title"> ℹ️ 使用帮助</div>
       <div class="step">
         <div class="step-number">1</div>
         <div class="step-text">
@@ -118,7 +149,264 @@ import { useInspectorConfig } from '../composables/useInspectorConfig.js'
 export default {
   name: 'InspectorPopup',
   setup() {
-    return useInspectorConfig()
+    const {
+      config,
+      currentItemId,
+      currentPrompt,
+      showCustomForm,
+      newItemName,
+      customInput,
+      editingItemId,
+      editingItemName,
+      editInput,
+      onItemChange,
+      onPromptChange,
+      showAddForm,
+      addNewItem,
+      cancelAdd,
+      deleteCurrentItem,
+      startEditItem,
+      saveEditItem,
+      cancelEditItem,
+      handleEditKeydown
+    } = useInspectorConfig()
+
+    return {
+      config,
+      currentItemId,
+      currentPrompt,
+      showCustomForm,
+      newItemName,
+      customInput,
+      editingItemId,
+      editingItemName,
+      editInput,
+      onItemChange,
+      onPromptChange,
+      showAddForm,
+      addNewItem,
+      cancelAdd,
+      deleteCurrentItem,
+      startEditItem,
+      saveEditItem,
+      cancelEditItem,
+      handleEditKeydown
+    }
   }
 }
 </script>
+
+<style scoped>
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  border-radius: 8px 8px 8px 8px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.config-section {
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.config-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #495057;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #495057;
+  font-size: 14px;
+}
+
+.custom-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.edit-btn {
+  margin-left: 4px;
+  padding: 6px 8px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.edit-btn:hover {
+  background: #5a6268;
+}
+
+.add-btn {
+  padding: 8px 12px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.add-btn:hover {
+  background: #218838;
+}
+
+.delete-btn {
+  padding: 8px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
+.form-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.save-btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-btn:hover {
+  background: #0056b3;
+}
+
+.cancel-btn {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+/* 编辑弹窗样式 */
+.edit-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+}
+
+.edit-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #495057;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+</style>
