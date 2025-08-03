@@ -3,7 +3,7 @@
 A Chrome extension built with Vue 3 for inspecting web page elements. This extension provides a user-friendly interface for examining DOM elements and their properties.
 
 ## Video Demo
-![Demo Video](image/output.mp4)
+![Demo](image/output.gif)
 
 ## Features
 
