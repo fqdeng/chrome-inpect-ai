@@ -2,6 +2,9 @@
 
 A Chrome extension built with Vue 3 for inspecting web page elements. This extension provides a user-friendly interface for examining DOM elements and their properties.
 
+## Download
+[https://github.com/fqdeng/chrome-inpect-ai/blob/master/crx/chrome-inspect-ai-1.0.0.crx](https://github.com/fqdeng/chrome-inpect-ai/blob/master/crx/chrome-inspect-ai-1.0.0.crx)
+
 ## Video Demo
 ![Demo](image/output.gif)
 
