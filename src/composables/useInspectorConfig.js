@@ -1,5 +1,5 @@
 // Vue组件：配置管理器
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick , toRaw} from 'vue'
 
 export function useInspectorConfig() {
   // 响应式状态
@@ -8,7 +8,7 @@ export function useInspectorConfig() {
       {
         id: 'default',
         name: '默认项目',
-        prompt: `\${html}请分析这个元素的CSS样式和布局特点。`
+        prompt: '${html}请分析这个元素的CSS样式和布局特点。'
       }
     ]
   })
@@ -45,6 +45,7 @@ export function useInspectorConfig() {
     try {
       const result = await chrome.storage.sync.get(['inspectorConfig'])
       if (result.inspectorConfig && result.inspectorConfig.items && Array.isArray(result.inspectorConfig.items)) {
+        console.log("找到有效配置")
         config.value = result.inspectorConfig
         // 确保当前选择的项目存在
         if (!config.value.items.find(item => item.id === currentItemId.value)) {
@@ -52,6 +53,7 @@ export function useInspectorConfig() {
         }
       } else {
         // 如果没有有效配置，使用默认配置
+        console.log("没有找到有效的配置，使用默认配置")
         config.value = {
           items: [
             {
@@ -83,7 +85,8 @@ export function useInspectorConfig() {
 
   const saveConfig = async () => {
     try {
-      await chrome.storage.sync.set({ inspectorConfig: config.value })
+      const plainConfig = JSON.parse(JSON.stringify(toRaw(config.value)))
+      await chrome.storage.sync.set({ inspectorConfig: plainConfig })
     } catch (error) {
       console.error('保存配置失败:', error)
     }
